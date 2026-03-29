@@ -1,16 +1,16 @@
-# Northern-Trust-hackathon-Project
+﻿# Northern-Trust-hackathon-Project
 
 # Mini-Payment-Gateway-Simulator
 
-Northern Trust hackathon Project
+Northern Trust hackathon project
 
-A full-stack payment gateway simulation built by a team of 5. It mimics how real UPI-style payments work — with async processing, random bank failures, live status polling, and a multi-party refund approval system. Built with Flask, SQLite, and vanilla JavaScript.
+A full-stack payment gateway simulation built by a team of 5. It mimics real UPI-style payments with async processing, random bank failures, live status polling, and a multi-party refund approval system. Built with Flask, MySQL, and vanilla JavaScript.
 
 ---
 
 # Quick Note Before You Start
 
-After you log in, **the dashboard loads on the create payment tab by default**. The payment form is below the fold — just **scroll down** after logging in to see the Receiver ID field, Amount, PIN input, and the Send Payment button.
+After you log in, the dashboard opens on the create payment tab by default. Scroll down after login to see the Receiver ID field, Amount, PIN input, and the Send Payment button.
 
 ---
 
@@ -20,6 +20,7 @@ After you log in, **the dashboard loads on the create payment tab by default**. 
 
 - Python 3.8 or higher
 - pip
+- MySQL Server
 
 ### Installation
 
@@ -27,12 +28,27 @@ After you log in, **the dashboard loads on the create payment tab by default**. 
 git clone https://github.com/YOUR_ORG/payflow.git
 cd payflow
 pip install -r requirements.txt
+```
+
+Set these environment variables before running the app:
+
+```bash
+MYSQL_HOST=127.0.0.1
+MYSQL_PORT=3306
+MYSQL_USER=root
+MYSQL_PASSWORD=your_password
+MYSQL_DATABASE=payments
+```
+
+Then run:
+
+```bash
 python app.py
 ```
 
-Then open your browser and go to: **http://localhost:5000**
+Open your browser and go to: `http://localhost:5000`
 
-That's it. The database is created automatically on first run with 5 demo accounts already seeded.
+The MySQL database and tables are created automatically on first run, with 5 demo accounts seeded for testing.
 
 ---
 
@@ -42,11 +58,11 @@ Use any of these to log in and test the app:
 
 | User ID | PIN  | Name         | Starting Balance |
 | ------- | ---- | ------------ | ---------------- |
-| USER001 | 1234 | Arjun Sharma | ₹50,000          |
-| USER002 | 5678 | Priya Patel  | ₹30,000          |
-| USER003 | 9999 | Ravi Kumar   | ₹75,000          |
-| USER004 | 1111 | Sneha Mehta  | ₹20,000          |
-| USER005 | 0000 | Demo User    | ₹1,50,000        |
+| USER001 | 1234 | Arjun Sharma | Rs. 50,000       |
+| USER002 | 5678 | Priya Patel  | Rs. 30,000       |
+| USER003 | 9999 | Ravi Kumar   | Rs. 75,000       |
+| USER004 | 1111 | Sneha Mehta  | Rs. 20,000       |
+| USER005 | 0000 | Demo User    | Rs. 1,50,000     |
 
 ---
 
@@ -54,31 +70,32 @@ Use any of these to log in and test the app:
 
 # Send Money
 
-Enter a receiver's User ID, an amount, and confirm with your PIN. The payment goes through a simulated bank pipeline — there's a deliberate 3-second delay to mimic real processing, and a 15% random failure rate to simulate network/bank errors. A live modal shows you the status changing from `CREATED → PROCESSING → SUCCESS` (or `FAILED`).
+Enter a receiver's User ID, an amount, and confirm with your PIN. The payment goes through a simulated bank pipeline with a deliberate 3-second delay and a 15% random failure rate to mimic real banking behavior. A live modal shows status changes from `CREATED -> PROCESSING -> SUCCESS` or `FAILED`.
 
-If a payment fails, a **Retry** button pre-fills the form so you can try again without re-entering everything.
+If a payment fails, a Retry button pre-fills the form so you can try again without re-entering everything.
 
 # Transaction History
 
-See every payment you've sent or received. Sent payments show in red (money out), received in green (money in). Successful sent payments within the last 10 minutes show a live countdown refund button.
+See every payment you have sent or received. Sent payments show in red, received payments show in green. Successful sent payments within the last 10 minutes show a live countdown refund button.
 
 # Check Payment Status
 
-Look up any payment by its ID (format: `PAY` followed by 10 characters). Useful for checking payments you didn't initiate, or for debugging.
+Look up any payment by its ID in the format `PAY` followed by 10 characters. Useful for checking payments you did not initiate or for debugging.
 
-#Analytics
-A global view of all transactions — total count, success/failure split, total volume processed, and a bar chart breaking down failure reasons.
+# Analytics
 
-### ↩ Refunds
+A global view of all transactions, including total count, success and failure split, total processed volume, and a chart-ready failure breakdown.
 
-A two-party refund system. The sender requests a refund, the receiver gets notified and must approve or reject it. Both sides need to confirm with their PIN.
+# Refunds
+
+A two-party refund system. The sender requests a refund, the receiver gets notified and must approve or reject it. Both sides confirm with their PIN.
 
 Rules:
 
 - Only the original sender can request
 - Only works on successful payments
 - Must be requested within 10 minutes of payment completion
-- One refund request per payment — no duplicate requests
+- One refund request per payment, with no duplicates
 - The receiver must have enough balance to approve
 
 ---
@@ -87,71 +104,71 @@ Rules:
 
 Every payment moves through these states:
 
-```
-CREATED → PROCESSING → SUCCESS
-                     ↘ FAILED
+```text
+CREATED -> PROCESSING -> SUCCESS
+                       -> FAILED
 ```
 
-- **CREATED** — payment record saved, background thread started
-- **PROCESSING** — bank picked it up (1 second in)
-- **SUCCESS** — money transferred between balances (3 seconds in)
-- **FAILED** — rejected by the simulated bank engine
+- `CREATED`: payment record saved and background thread started
+- `PROCESSING`: bank picked it up
+- `SUCCESS`: money transferred between balances
+- `FAILED`: rejected by the simulated bank engine
 
-Failure reasons you might see: `INSUFFICIENT_BALANCE`, `BANK_SERVER_TIMEOUT`, `NETWORK_ERROR`, `DAILY_LIMIT_EXCEEDED`, `INVALID_AMOUNT`, `AMOUNT_EXCEEDS_LIMIT`
+Failure reasons include `INSUFFICIENT_BALANCE`, `BANK_SERVER_TIMEOUT`, `NETWORK_ERROR`, `DAILY_LIMIT_EXCEEDED`, `INVALID_AMOUNT`, and `AMOUNT_EXCEEDS_LIMIT`.
 
 ---
 
-## ↩ Refund State Machine
+# Refund State Machine
 
-```
-payment.refund_status:   none → pending → accepted
-                                        ↘ rejected
+```text
+payment.refund_status: none -> pending -> accepted
+                                  -> rejected
 ```
 
-The Refund column in Transaction History reflects this in real time — no page refresh needed.
+The refund column in transaction history reflects this in real time without a page refresh.
 
 ---
 
-## Database Schema
+# Database Schema
 
-Three tables, all in a local SQLite file (`payments.db`) that gets created on first run.
+Three tables are stored in MySQL and created automatically on first run.
 
 **users**
 
-```
-id       TEXT  PRIMARY KEY
-name     TEXT
-pin      TEXT
-balance  REAL  DEFAULT 10000.0
+```text
+id       VARCHAR(20)   PRIMARY KEY
+name     VARCHAR(100)
+pin      VARCHAR(10)
+balance  DECIMAL(12,2) DEFAULT 10000.0
 ```
 
 **payments**
 
-```
-payment_id      TEXT  PRIMARY KEY   (format: PAYxxxxxxxxxx)
-sender_id       TEXT  → users.id
-receiver_id     TEXT  → users.id
-amount          REAL
-currency        TEXT  DEFAULT 'INR'
-status          TEXT  DEFAULT 'CREATED'
-failure_reason  TEXT  (nullable)
-refund_status   TEXT  DEFAULT 'none'
-created_at      TEXT
-updated_at      TEXT
+```text
+payment_id      VARCHAR(20)   PRIMARY KEY
+sender_id       VARCHAR(20)   -> users.id
+receiver_id     VARCHAR(20)   -> users.id
+amount          DECIMAL(12,2)
+currency        VARCHAR(10)   DEFAULT 'INR'
+status          VARCHAR(20)   DEFAULT 'CREATED'
+failure_reason  VARCHAR(100)  NULL
+refund_status   VARCHAR(20)   DEFAULT 'none'
+created_at      VARCHAR(32)
+updated_at      VARCHAR(32)
 ```
 
 **refund_requests**
 
-```
-refund_id    TEXT  PRIMARY KEY   (format: REFxxxxxxxxxx)
-payment_id   TEXT  → payments.payment_id
-requester_id TEXT  → users.id
-receiver_id  TEXT  → users.id
-amount       REAL
-currency     TEXT  DEFAULT 'INR'
-status       TEXT  DEFAULT 'PENDING'
-created_at   TEXT
-updated_at   TEXT
+```text
+refund_id      VARCHAR(20)   PRIMARY KEY
+payment_id     VARCHAR(20)   -> payments.payment_id
+requester_id   VARCHAR(20)   -> users.id
+receiver_id    VARCHAR(20)   -> users.id
+amount         DECIMAL(12,2)
+currency       VARCHAR(10)   DEFAULT 'INR'
+status         VARCHAR(20)   DEFAULT 'PENDING'
+created_at     VARCHAR(32)
+updated_at     VARCHAR(32)
 ```
 
 ---
@@ -160,63 +177,64 @@ updated_at   TEXT
 
 ### Auth
 
-| Method | Endpoint     | Description                                     |
-| ------ | ------------ | ----------------------------------------------- |
-| POST   | `/api/auth`  | Verify User ID + PIN. Returns name and balance. |
-| GET    | `/api/users` | List all users (id + name only, no PINs).       |
+| Method | Endpoint     | Description |
+| ------ | ------------ | ----------- |
+| POST   | `/api/auth`  | Verify User ID and PIN. Returns name and balance. |
+| GET    | `/api/users` | List all users with id and name only. |
 
 ### Payments
 
-| Method | Endpoint                  | Description                                    |
-| ------ | ------------------------- | ---------------------------------------------- |
-| POST   | `/api/payment/create`     | Create a new payment and start processing.     |
-| GET    | `/api/payment/<id>`       | Get status of a single payment.                |
-| GET    | `/api/payments/user/<id>` | Get all payments for a user (sent + received). |
+| Method | Endpoint                  | Description |
+| ------ | ------------------------- | ----------- |
+| POST   | `/api/payment/create`     | Create a new payment and start processing. |
+| GET    | `/api/payment/<id>`       | Get status of a single payment. |
+| GET    | `/api/payments/user/<id>` | Get all payments for a user. |
 
 ### Refunds
 
-| Method | Endpoint                   | Description                                           |
-| ------ | -------------------------- | ----------------------------------------------------- |
-| POST   | `/api/refund/request`      | Sender requests a refund (PIN required).              |
+| Method | Endpoint                   | Description |
+| ------ | -------------------------- | ----------- |
+| POST   | `/api/refund/request`      | Sender requests a refund with PIN verification. |
 | GET    | `/api/refund/pending/<id>` | Get refund requests waiting for this user's approval. |
-| GET    | `/api/refund/all/<id>`     | Get all refunds related to a user.                    |
-| POST   | `/api/refund/action`       | Receiver approves or rejects a refund (PIN required). |
+| GET    | `/api/refund/all/<id>`     | Get all refunds related to a user. |
+| POST   | `/api/refund/action`       | Receiver approves or rejects a refund with PIN verification. |
 
 ### Analytics
 
-| Method | Endpoint       | Description                                                       |
-| ------ | -------------- | ----------------------------------------------------------------- |
-| GET    | `/api/summary` | Global stats — total, success, failed, volume, failure breakdown. |
+| Method | Endpoint       | Description |
+| ------ | -------------- | ----------- |
+| GET    | `/api/summary` | Global stats for transaction totals, status split, volume, and failure breakdown. |
 
 ---
 
 # Project Structure
 
-```
+```text
 payflow/
-├── app.py                  ← Flask backend (all routes + DB logic)
-├── requirements.txt
-├── payments.db             ← Auto-created on first run (do not commit)
-├── static/
-│   ├── script.js           ← All frontend JavaScript
-│   └── styles.css          ← Full CSS design system
-└── templates/
-    └── index.html          ← Single-page app shell
+|-- app.py
+|-- requirements.txt
+|-- .env.example
+|-- static/
+|   |-- script.js
+|   `-- styles.css
+`-- templates/
+    `-- index.html
 ```
 
 # Known Quirks
 
-- **Scroll down after login** — the Send Money form is below the visible area on first load. Just scroll down to see it.
-- **15% failure rate is intentional** — payments randomly fail to simulate real bank errors. Use the Retry button.
-- **10-minute refund window** — the countdown timer in Transaction History is real. Once it hits zero, you can't request a refund for that payment.
-- **`payments.db` is auto-created** — if you delete it, the app recreates it fresh with the same demo users on next startup.
-- **Don't commit `payments.db`** — it's in `.gitignore` for a reason. Everyone should have their own local DB.
+- Scroll down after login because the Send Money form loads below the visible area.
+- The 15% failure rate is intentional to simulate real bank errors.
+- The 10-minute refund window is real and enforced in the backend.
+- The app creates the configured MySQL database and tables automatically if they do not already exist.
 
 ---
 
 # requirements.txt
 
-```
+```text
 flask>=2.3.0
 flask-cors>=4.0.0
+mysql-connector-python>=9.0.0
+python-dotenv>=1.0.1
 ```
